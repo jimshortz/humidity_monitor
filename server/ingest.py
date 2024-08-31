@@ -10,12 +10,18 @@ logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=loggin
 
 INSERT_SQL = 'insert ignore into raw (sensor_id, value) values (?,?)'
 
-# TODO - Read from DB
-sensors = {
-    'basement/indoor_humid': 1,
-    'basement/indoor_temp': 2,
-    'basement/power' : 3}
+def read_sensor_ids():
+    logging.info('Reading sensor ID mappings')
+    ret = {}
+    with closing(db_pool.get_connection()) as conn:
+        cur = conn.cursor()
+        cur.execute("select feed, sensor_id from sensors")
+        for (feed, sensor_id) in cur.fetchall():
+            ret[feed] = sensor_id
+    return ret
 
+# Cache the feed name->sensor id mappings since we do it so much
+sensors = read_sensor_ids()
 
 # The callback for when the client receives a CONNACK response from the server.
 def on_connect(client, userdata, flags, reason_code, properties):
