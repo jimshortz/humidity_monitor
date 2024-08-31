@@ -1,25 +1,29 @@
+import json
 import logging
 import mariadb
 import os
 
 logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=logging.INFO)
 
-# Configuration
-db_host = os.environ.get("DB_HOST", "localhost")
-db_port = int(os.environ.get("DB_PORT", "3307"))
-db_user = os.environ["DB_USER"]
-db_pass = os.environ["DB_PASS"]
-db_database = os.environ["DB_DATABASE"]
+def load_config():
+    path = os.environ.get("CONFIG_PATH")
+    if not path:
+        raise RuntimeError("Must set CONFIG_PATH environment variable")
+    with open(path, 'r') as f:
+        return json.load(f)
+    
+config_map = load_config()
 
 def create_connection_pool():
     # Create a connection pool to get a cheap auto-reconnect
     # implementation
+    cfg = config_map['mariadb']
     pool = mariadb.ConnectionPool(
-        host=db_host,
-        port=db_port,
-        user=db_user,
-        database=db_database,
-        password=db_pass,
+        host=cfg['host'],
+        port=cfg['port'],
+        user=cfg['user'],
+        password=cfg['pass'],
+        database=cfg['database'],
         autocommit=True,
         pool_name="ingest",
         pool_size=1)

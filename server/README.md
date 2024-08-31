@@ -7,31 +7,28 @@ and analyzing humidity, temperature, and power data.  It runs as a daemon, liste
 * Produces cycle data indicating how long the dehumidifer spent on and off
 * Prunes old raw data (TODO)
 
-# Configruration
+# Configuration
 
-TODO - Explain env vars
-
-# Building
-
-docker build --platform linux/amd64 -t humid .
+All settings live in the `config.json` file.  The location of this file is
+passed as a single environment variable `CONFIG_PATH`.  In a local environment
+this can be whatever.  In a container, the config file should be mounted
+read only into the /config directory.
 
 # Testing locally (without Docker)
-Create runit.sh file to include env vars.  Include
-```
-python3 main.py
-```
-at the end.
-
 ```
 python3 -m venv venv
 source venv/bin/activate
 pip -r requirements.txt
-./runit.sh
+CONFIG_PATH=./config.json python main.py
+```
+
+# Building
+```
+docker build --platform linux/amd64 -t humid .
 ```
 
 # Testing locally (in Docker)
-Write `env` file with appropriate variables
-
+Assuming desired config file is in the local directory as `config.json.dev`:
 ```
-docker run --env-file env humid
+docker run -v .:/config -e CONFIG_PATH=/config/config.json.dev humid
 ```

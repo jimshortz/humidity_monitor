@@ -1,0 +1,16 @@
+{
+    "mqtt": {
+	"host": "192.168.1.2",
+	"port": 1883,
+	"user": "humid_dev",
+	"pass": "YOUR_PASSWORD",
+	"topic": "basement/#"
+    },
+    "mariadb": {
+        "host": "192.168.1.2",
+        "port": 3307,
+        "database": "humid_dev",
+        "user": "humid_dev",
+        "pass": "YOUR_PASSWORD"
+    }
+}
