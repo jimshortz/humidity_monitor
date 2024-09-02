@@ -13,7 +13,7 @@
 import logging
 from contextlib import closing
 from datetime import datetime, timedelta, timezone
-from common import db_pool, truncate_hour
+from common import db_connect, truncate_hour
 
 # Constants
 max_gap = timedelta(minutes=2)
@@ -101,7 +101,7 @@ def daily_summary(job_start_time, conn):
     conn.commit()
 
 def analyze():
-    with closing(db_pool.get_connection()) as conn:
+    with closing(db_connect()) as conn:
         logging.info("Starting analysis")
         job_start_time = datetime.now(timezone.utc)
         cycle_analyze(job_start_time, conn)        

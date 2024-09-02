@@ -4,7 +4,7 @@ import os
 import paho.mqtt.client as mqtt
 from contextlib import closing
 from analysis import analyze
-from common import config_map,db_pool
+from common import config_map,db_connect
 
 logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=logging.DEBUG)
 
@@ -13,7 +13,7 @@ INSERT_SQL = 'insert ignore into raw (sensor_id, value) values (?,?)'
 def read_sensor_ids():
     logging.info('Reading sensor ID mappings')
     ret = {}
-    with closing(db_pool.get_connection()) as conn:
+    with closing(db_connect()) as conn:
         cur = conn.cursor()
         cur.execute("select feed, sensor_id from sensors")
         for (feed, sensor_id) in cur.fetchall():
@@ -29,7 +29,9 @@ def on_connect(client, userdata, flags, reason_code, properties):
     client.subscribe(config_map['mqtt']['topic'])
 
 # The callback for when a PUBLISH message is received from the server.
+conn = None
 def on_message(client, userdata, msg):
+    global conn
     try:
         logging.debug(f'Handling message {msg.topic} {msg.payload}')
 
@@ -41,12 +43,22 @@ def on_message(client, userdata, msg):
         elif len(value) > 32:
             logging.info(f'Skipping malformed message {value[:32]}...')
         else:
-            with closing(db_pool.get_connection()) as conn:
-                cur = conn.cursor()
-                cur.execute(INSERT_SQL, (sensor_id, value))
-                logging.debug(f'Inserted {sensor_id},{value}')
+            if not conn:
+                logging.debug('Attempting to connect to database')
+                conn = db_connect()
+                logging.info(f'Connected to database')
+            cur = conn.cursor()
+            cur.execute(INSERT_SQL, (sensor_id, value))
+            logging.debug(f'Inserted {sensor_id},{value}')
     except BaseException as e:
         logging.error(f'Error handling datapoint: {e}')
+        if conn:
+            try:
+                logging.debug(f'Closing database connection')
+                conn.close()
+            except BaseException as e:
+                logging.debug(f'Exception closing connection {e}')
+            conn = None
 
 
 mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)

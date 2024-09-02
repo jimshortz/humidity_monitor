@@ -1,6 +1,5 @@
 import logging
 from analysis import analyze
-from common import db_pool
 from ingest import start_ingest, stop_ingest
 from time import sleep
 from datetime import datetime, timedelta, timezone

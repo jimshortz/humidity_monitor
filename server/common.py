@@ -14,27 +14,17 @@ def load_config():
     
 config_map = load_config()
 
-def create_connection_pool():
-    # Create a connection pool to get a cheap auto-reconnect
-    # implementation
+# Creates a connection to MariaDB
+def db_connect():
     cfg = config_map['mariadb']
-    pool = mariadb.ConnectionPool(
+    return mariadb.Connection(
         host=cfg['host'],
         port=cfg['port'],
         user=cfg['user'],
         password=cfg['pass'],
         database=cfg['database'],
-        autocommit=True,
-        pool_name="ingest",
-        pool_size=1)
-
-    # Return Connection Pool
-    return pool
-
+        autocommit=True)
+        
 # Truncates datetime to beginning of hour
 def truncate_hour(dt):
     return dt.replace(minute=0, second=0, microsecond=0)
-
-
-
-db_pool=create_connection_pool()
