@@ -1,25 +1,16 @@
 #!/usr/local/bin/python3 -u
 
-#######################################################################
-# Temperature/Humidity/Power Sensor v2.0
-#
-# Python daemon
-# (C)2021 by Jim Shortz
-#
-# This is a simple, idempotent job that ingests data from Adafruit
-# IO's REST api and inserts it into the MariaDB.
-########################################################################
-
 import logging
-from contextlib import closing
 from datetime import datetime, timedelta, timezone
-from common import db_connect, truncate_hour
+from common import conn, truncate_hour
+from schedule import repeat, every
 
 # Constants
 max_gap = timedelta(minutes=2)
 comp_threshold = 200
 
-def cycle_analyze(job_start_time, conn):
+@repeat(every().hour)
+def cycle_analyze():
     cur = conn.cursor()
 
     # Find last completed cycle
@@ -58,12 +49,13 @@ def cycle_analyze(job_start_time, conn):
     logging.info(f"Committing {row_count} rows")
     conn.commit()
 
-def hourly_summary(job_start_time, conn):
+@repeat(every().hour)
+def hourly_summary():
     cur = conn.cursor()
     cur.execute("select max(time) from hourly")
     start = cur.fetchone()[0] or datetime.min
     start = start + timedelta(hours=1)
-    end = truncate_hour(job_start_time)
+    end = truncate_hour(datetime.now(timezone.utc))
     logging.info("Generating hourly records between %s and %s", start, end)
     cur.execute("""
     insert  into hourly (time, sensor_id, samples, min_value, avg_value, max_value)
@@ -79,12 +71,13 @@ def hourly_summary(job_start_time, conn):
     logging.info("Committing %s rows", cur.rowcount)
     conn.commit()
 
-def daily_summary(job_start_time, conn):
+@repeat(every().day)
+def daily_summary():
     cur = conn.cursor()
     cur.execute("select max(time) from daily")
     start = cur.fetchone()[0] or datetime.min.date()
     start = start + timedelta(days=1)
-    end = job_start_time.date()
+    end = datetime.now(timezone.utc).date()
     logging.info("Generating daily records between %s and %s", start, end)
     cur.execute("""
     insert  into daily (time, sensor_id, samples, min_value, avg_value, max_value)
@@ -97,15 +90,5 @@ def daily_summary(job_start_time, conn):
     from    raw
     where   time >= ? and time < ?
     group by 1, 2""", (start, end))
-    logging.info("Committing %s rows", cur.rowcount)
-    conn.commit()
+    logging.info("Wrote %s rows", cur.rowcount)
 
-def analyze():
-    with closing(db_connect()) as conn:
-        logging.info("Starting analysis")
-        job_start_time = datetime.now(timezone.utc)
-        cycle_analyze(job_start_time, conn)        
-        hourly_summary(job_start_time, conn)
-        daily_summary(job_start_time, conn)
-        # TODO - clean old measurements
-    logging.info("End of analysis job")

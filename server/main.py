@@ -1,36 +1,29 @@
 import logging
-from analysis import analyze
-from ingest import start_ingest, stop_ingest
-from time import sleep
+import schedule
+
 from datetime import datetime, timedelta, timezone
+from time import sleep
 
-def next_run():
-    now = datetime.now(timezone.utc)
-    t = now.replace(minute=2,second=0,microsecond=0)
-    if t < now:
-        t = t + timedelta(hours=1)
-    return t
-
-def sleep_until(t):
-    d = t - datetime.now(timezone.utc)
-    if d.total_seconds() > 0:
-        logging.debug(f'Snoozing {d}')
-        sleep(d.total_seconds())
+# Order matters here.  We want MQTT to start immediately and the
+# others to run in this order in the scheduler
+import mqtt
+import ingest
+import alarm
+import mail
+import maint
 
 # Main
-logging.info('Starting')
-
-start_ingest()
-
+logging.info('Starting scheduler')
 while True:
+    snooze = 0
     try:
-        analyze()
+        schedule.run_pending()
+        snooze = schedule.idle_seconds()
     except BaseException as e:
-        logging.error(f'Analyze job got exception {e}')
+        logging.exception(f'Exception in job')
+        snooze = 60
+        
+    if snooze > 0:
+        sleep(snooze)
 
-    wakeup = next_run()
-    logging.info(f'Next run at {wakeup}')
-    sleep_until(wakeup)
-
-logging.info('Exiting')
 
