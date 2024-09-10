@@ -24,5 +24,6 @@ def ingest():
         cur = conn.cursor()
         logging.debug(f'Inserting {batch}')
         cur.executemany(INSERT_SQL, batch)
+    logging.info(f'Inserted {len(batch)} data points')
             
             

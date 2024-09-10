@@ -18,13 +18,15 @@ config_map = load_config()
 # Creates a connection to MariaDB
 def db_connect():
     cfg = config_map['mariadb']
-    return mariadb.Connection(
+    conn = mariadb.Connection(
         host=cfg['host'],
         port=cfg['port'],
         user=cfg['user'],
         password=cfg['pass'],
         database=cfg['database'],
         autocommit=True)
+    logging.info(f'Connected to database')
+    return conn
 
 def ensure_connected():
     try:
@@ -32,6 +34,7 @@ def ensure_connected():
         cur.execute('SELECT VERSION()')
     except mariadb.Error:
         conn.reconnect()
+        logging.info(f'Reconnected to database')
         
 # Truncates datetime to beginning of hour
 def truncate_hour(dt):

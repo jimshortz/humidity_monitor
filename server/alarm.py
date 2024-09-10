@@ -8,7 +8,7 @@ from schedule import every, repeat
 
 AlarmState = Enum('AlarmState', ['UNKNOWN','STARTUP', 'TOO_LOW','TOO_HIGH','HEALTHY'])
 
-Aggregate = Enum('Aggregate', ['COUNT','AVG'])
+Aggregate = Enum('Aggregate', ['COUNT','AVG', 'MIN', 'MAX'])
 email_sender = config_map['email']['sender']
 email_recipients = config_map['email']['recipients']
 
@@ -28,7 +28,7 @@ alarm_defs = [
         agg=Aggregate.COUNT,
         min=1,
         window=timedelta(minutes=5),
-        message="No data flow"
+        message="Data flow"
     ),
     AlarmDefinition(
         id='humidity',
@@ -39,7 +39,14 @@ alarm_defs = [
         window=timedelta(minutes=15),
         message='Humidity'
     ),
-        
+    AlarmDefinition(
+        id='dehumid',
+        sensor_id=3,
+        agg=Aggregate.MAX,
+        min=200,
+        window=timedelta(minutes=60),
+        message='Dehumidfier 1hr'
+    ),        
 ]
 
 alarm_state = {d.id: AlarmState.UNKNOWN for d in alarm_defs}
@@ -86,8 +93,9 @@ def evaluate_alarms():
            
         
 def generate_email(d:AlarmDefinition, now, old_state, new_state, value):
+    # TODO - reduce decimal points
     body = f"""Alarm {d.id} has entered the {new_state.name} state (was {old_state.name}).
-As of {now.isoformat()} value is {value:.2f}."""
+As of {now.isoformat()} value is {value}."""
     if d.min is not None:
         body = body + f'\nMinimum allowed is {d.min:.2f}.'
 

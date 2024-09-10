@@ -12,5 +12,15 @@
         "database": "humid_dev",
         "user": "humid_dev",
         "pass": "YOUR_PASSWORD"
-    }
+    },
+  "email": {
+    "sender": "Humidscope <you@gmail.com>",
+    "recipients": [
+      "you@gmail.com"
+    ],
+    "smtp_host": "smtp.gmail.com",
+    "smtp_port": 465,
+    "username": "you@gmail.com",
+    "password": "YOUR_APP_PASSWORD"
+  }    
 }

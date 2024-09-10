@@ -12,5 +12,5 @@ def send_mail():
             smtp_server.login(cfg['username'], cfg['password'])
             while mail_queue:
                 msg = mail_queue.pop()
-                logging.warn(f'Sending email: {msg}')
+                logging.debug(f'Sending email: {msg}')
                 smtp_server.sendmail(cfg['sender'], cfg['recipients'], msg.as_string())

@@ -9,7 +9,7 @@ from schedule import repeat, every
 max_gap = timedelta(minutes=2)
 comp_threshold = 200
 
-@repeat(every().hour)
+@repeat(every().hour.at(':02'))
 def cycle_analyze():
     cur = conn.cursor()
 
@@ -46,10 +46,9 @@ def cycle_analyze():
         # Save state for next reading
         (was_time, was_on) = (is_time, is_on)
 
-    logging.info(f"Committing {row_count} rows")
-    conn.commit()
+    logging.info(f'Wrote {row_count} records')
 
-@repeat(every().hour)
+@repeat(every().hour.at(':02'))
 def hourly_summary():
     cur = conn.cursor()
     cur.execute("select max(time) from hourly")
@@ -68,10 +67,9 @@ def hourly_summary():
     from    raw
     where   time >= ? and time < ?
     group by 1, 2""", (start, end))
-    logging.info("Committing %s rows", cur.rowcount)
-    conn.commit()
+    logging.info(f'Wrote {cur.rowcount} records')
 
-@repeat(every().day)
+@repeat(every().day.at('00:15'))
 def daily_summary():
     cur = conn.cursor()
     cur.execute("select max(time) from daily")
