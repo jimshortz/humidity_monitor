@@ -43,8 +43,8 @@ produce a CSV that can be loaded with:
 CREATE TABLE `ada_raw` (
   `time` datetime NOT NULL,
   `sensor_id` int(11) NOT NULL,
-  `value` decimal(6,2) NOT NULL
-  PRIMARY KEY (time, sensor));
+  `value` decimal(6,2) NOT NULL,
+  PRIMARY KEY (`time`, `sensor_id`));
   
 LOAD DATA LOCAL INFILE 'indoor_humid-20240828-1445.csv'
 IGNORE
