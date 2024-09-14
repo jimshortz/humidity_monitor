@@ -1,6 +1,8 @@
+#! venv/bin/python -u
 import logging
 import schedule
 
+from common import ensure_connected
 from datetime import datetime, timedelta, timezone
 from time import sleep
 
@@ -17,6 +19,7 @@ logging.info('Starting scheduler')
 while True:
     snooze = 0
     try:
+        ensure_connected()
         schedule.run_pending()
         snooze = schedule.idle_seconds()
     except BaseException as e:

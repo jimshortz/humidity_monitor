@@ -1,7 +1,8 @@
 import logging
 import os
 import queue
-from common import config_map, ingest_queue, conn, ensure_connected
+from common import config_map, ingest_queue, conn
+from contextlib import closing
 from schedule import repeat, every
 
 INSERT_SQL = 'INSERT raw (time, sensor_id, value) VALUES (?,?,?) '+ \
@@ -18,12 +19,11 @@ def read_pending():
     
 @repeat(every().minute)
 def ingest():
-    ensure_connected()
     batch = read_pending()
     if batch:
-        cur = conn.cursor()
-        logging.debug(f'Inserting {batch}')
-        cur.executemany(INSERT_SQL, batch)
-    logging.info(f'Inserted {len(batch)} data points')
+        with closing(conn.cursor()) as cur:
+            logging.debug(f'Inserting {batch}')
+            cur.executemany(INSERT_SQL, batch)
+    logging.debug(f'Inserted {len(batch)} data points')
             
             

@@ -20,7 +20,7 @@ def on_message(client, userdata, msg):
 
         if sensor_id:
             ingest_queue.put_nowait((recvd, sensor_id, value))
-            logging.debug(f'Queueing {recvd}, {sensor_id}, {value}')
+            logging.debug(f'Queued {recvd}, {sensor_id}, {value}')
         else:
             logging.warn(f'Ignoring unknown topic {msg.topic}')
             

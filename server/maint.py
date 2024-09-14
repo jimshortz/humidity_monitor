@@ -2,7 +2,8 @@
 
 import logging
 from datetime import datetime, timedelta, timezone
-from common import conn, truncate_hour
+from common import conn, truncate_hour, config_map
+from contextlib import closing
 from schedule import repeat, every
 
 # Constants
@@ -90,3 +91,16 @@ def daily_summary():
     group by 1, 2""", (start, end))
     logging.info("Wrote %s rows", cur.rowcount)
 
+@repeat(every().day.at('06:00'))
+def prune_raw():
+    days_to_keep = config_map['retention']['raw']
+    oldest = datetime.now(timezone.utc).date() - timedelta(days=days_to_keep)
+    logging.info(f'Pruning raw records older than {oldest.isoformat()}')
+    total_rows = 0
+    with closing(conn.cursor()) as cur:
+        while True:
+            cur.execute('DELETE FROM raw WHERE time < ? LIMIT 5000', (oldest,))
+            total_rows = total_rows + cur.rowcount
+            if cur.rowcount < 5000:
+                break
+    logging.info(f'Pruned {total_rows} records')

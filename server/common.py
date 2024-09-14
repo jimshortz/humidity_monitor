@@ -4,7 +4,8 @@ import mariadb
 import os
 import queue
 
-logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=logging.INFO)
+LOG_LEVEL = os.environ.get('LOGLEVEL', 'INFO').upper()
+logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=LOG_LEVEL)
 
 def load_config():
     path = os.environ.get("CONFIG_PATH")
