@@ -7,7 +7,7 @@ and analyzing humidity, temperature, and power data.  It runs as a daemon, liste
 * Produces cycle data indicating how long the dehumidifer spent on and off
 * Prunes old raw data
 
-# Configuration
+## Configuration
 
 All settings live in the `config.json` file.  The location of this file is
 passed as a single environment variable `CONFIG_PATH`.  In a local environment
@@ -16,7 +16,7 @@ read only into the /config directory.
 
 See `config.json.sample` for a template you can use.
 
-# Testing locally (without Docker)
+## Testing locally (without Docker)
 ```
 python3 -m venv venv
 source venv/bin/activate
@@ -24,18 +24,24 @@ pip -r requirements.txt
 CONFIG_PATH=./config.json python main.py
 ```
 
-# Building
+## Building
 ```
 docker build --platform linux/amd64 -t humid .
 ```
 
-# Testing locally (in Docker)
+## Testing locally (in Docker)
 Assuming desired config file is in the local directory as `config.json.dev`:
 ```
 docker run -v .:/config -e CONFIG_PATH=/config/config.json.dev humid
 ```
 
-# Loading Adafruit Data
+## Installing as a systemd service instead of Docker
+
+If you do not wish to deploy using docker, `install.sh` will deploy as
+a systemd service.  The script is not very robust and I probably did
+it all wrong as I am not a systemd expert.
+
+## Loading Adafruit Data
 
 If you screw up your local ingest, you can download data from Adafruit
 using their "Download All Data" button on the feeds page.  It will
