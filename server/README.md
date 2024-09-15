@@ -1,11 +1,17 @@
 # Data logging/analysis support
 
 This directory contains a Dockerized python application for collecting
-and analyzing humidity, temperature, and power data.  It runs as a daemon, listening to MQTT topics and writing data to the DB as received.  It also kicks off an hourly job that:
+and analyzing humidity, temperature, and power data.  It is a single Python process
+that consists of a number of
+modules that perform the following functions:
+
+* Reads data points from MQTT and applies timestamps
+* Writes data points into a SQL database
+* Evaluates user-defined alarm conditions and sends email if there are problems
 * Summarizes hourly statistics into the hourly table
 * Summarizes daily statistics into the daily table
 * Produces cycle data indicating how long the dehumidifer spent on and off
-* Prunes old raw data
+* Performs data retention management.
 
 ## Configuration
 
