@@ -1,3 +1,17 @@
+########################################################################
+# Humidscope
+#
+# Humidity/Temperature/Power monitoring system.
+#
+# by Jim Shortz
+#
+# Data Ingest Module
+#
+# This file contains a scheduled job that reads data points from the
+# ingest_queue and writes them to the database.  It runs once per minute
+# for low(ish) latency and reliability.
+########################################################################
+
 import logging
 import os
 import queue

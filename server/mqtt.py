@@ -4,7 +4,22 @@ import paho.mqtt.client as mqtt
 from common import config_map, sensor_ids, ingest_queue
 from datetime import datetime, timezone
 
-# The callback for when the client receives a CONNACK response from the server.
+########################################################################
+# Humidscope
+#
+# Humidity/Temperature/Power monitoring system.
+#
+# by Jim Shortz
+#
+# MQTT Listener Module
+#
+# This file contains and automatically starting MQTT listener.
+# It receives data readings from the relevant MQTT topics, applies
+# timestamps to the data points, and inserts them into ingest_queue.
+#
+# It was shamelessly stolen from the paho MQTT sample code.
+########################################################################
+
 def on_connect(client, userdata, flags, reason_code, properties):
     logging.info(f"MQTT Connected with result code {reason_code}")
     client.subscribe(config_map['mqtt']['topic'])

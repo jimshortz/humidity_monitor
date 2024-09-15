@@ -6,6 +6,7 @@ pip --no-cache-dir install -r requirements.txt
 EOF
 COPY *.py .
 ENV CONFIG_PATH=/config/config.json
+ENV RUN_ALL=1
 VOLUME /config
 CMD python3 -u main.py
 

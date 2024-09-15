@@ -1,5 +1,20 @@
 #! venv/bin/python -u
+
+########################################################################
+# Humidscope
+#
+# Humidity/Temperature/Power monitoring system.
+#
+# by Jim Shortz
+#
+# Main module.
+#
+# This is the entry point for the system.  It simply loads the
+# constituent models and services the scheduler.
+########################################################################
+
 import logging
+import os
 import schedule
 
 from common import ensure_connected
@@ -14,7 +29,12 @@ import alarm
 import mail
 import maint
 
-# Main
+if os.environ.get('RUN_ALL'):
+    logging.info('Running all jobs')
+    schedule.run_all()
+    
+# Main loop.  Processes the schedule and makes sure the DB is
+# alive before starting a job.
 logging.info('Starting scheduler')
 while True:
     snooze = 0

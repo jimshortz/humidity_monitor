@@ -1,3 +1,19 @@
+########################################################################
+# Humidscope
+#
+# Humidity/Temperature/Power monitoring system.
+#
+# by Jim Shortz
+#
+# SMTP module
+#
+# This file contains a scheduled job that sends emails written into
+# mail_queue.  This allows multiple messages to be sent with a single
+# SMTP session.
+#
+# It should run after the alarm module to avoid additional latency.
+########################################################################
+
 import logging
 import smtplib
 from common import mail_queue, config_map
