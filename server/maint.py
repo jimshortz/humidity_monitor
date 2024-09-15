@@ -23,13 +23,20 @@ from schedule import repeat, every
 max_gap = timedelta(minutes=2)
 comp_threshold = 200
 
+LAST_CYCLE_SQL = '''select date_add(start_time, interval on_duration+off_duration second)
+from cycles order by start_time desc limit 1;'''
+
 @repeat(every().hour.at(':02'))
 def cycle_analyze():
     with closing(conn.cursor()) as cur:
         
         # Find last completed cycle
-        cur.execute("select max(end_time) from cycles")
-        start = cur.fetchone()[0] or datetime(2000,1,1,0,0,0)
+        cur.execute(LAST_CYCLE_SQL)
+        row = cur.fetchone()
+        if row:
+            start = row[0]
+        else:
+            start = datetime(2000,1,1,0,0,0)
 
         (was_on, was_time) = (False, start)
         (on_time, off_time) = (None, None)
@@ -49,11 +56,11 @@ def cycle_analyze():
             if not was_on and is_on:
                 logging.debug("Turned on at %s", is_time)
                 if on_time and off_time:
-                    cycle = (on_time, off_time, is_time)
-                    logging.debug(f'Inserting cycle {on_time.isoformat()},{off_time.isoformat()},{is_time.isoformat()}')
+                    cycle = (on_time, (off_time-on_time).total_seconds(), (is_time - off_time).total_seconds())
+                    logging.debug(f'Inserting cycle {cycle[0].isoformat()},{cycle[1]},{cycle[2]}')
                     batch.append(cycle)
-                    if len(batch) > 50:
-                        cur.executemany("insert into cycles (start_time, off_time, end_time) values (?,?,?)", batch)
+                    if len(batch) > 500:
+                        cur.executemany("insert into cycles (start_time, on_duration, off_duration) values (?,?,?)", batch)
                         row_count = row_count + len(batch)
                         batch.clear()
                 (on_time, off_time) = (is_time, None)
@@ -65,7 +72,7 @@ def cycle_analyze():
             (was_time, was_on) = (is_time, is_on)
 
         if batch:
-            cur.executemany("insert into cycles (start_time, off_time, end_time) values (?,?,?)", batch)
+            cur.executemany("insert into cycles (start_time, on_duration, off_duration) values (?,?,?)", batch)
             row_count = row_count + len(batch)
         
     logging.info(f'Wrote {row_count} records')

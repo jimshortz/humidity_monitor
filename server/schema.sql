@@ -6,9 +6,9 @@ CREATE TABLE IF NOT EXISTS `sensors` (
 
 CREATE TABLE `cycles` (
   `start_time` datetime NOT NULL,
-  `off_time` datetime NOT NULL,
-  `end_time` datetime NOT NULL,
-  PRIMARY KEY (`end_time`)
+  `on_duration` INT NOT NULL,
+  `off_duration` INT NOT NULL,
+  PRIMARY KEY (`start_time`)
 ) ENGINE=InnoDB DEFAULT CHARSET=latin1 COLLATE=latin1_swedish_ci;
 
 CREATE TABLE `daily` (
