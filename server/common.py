@@ -77,5 +77,6 @@ def truncate_hour(dt):
 config_map = _load_config()
 conn = _db_connect()
 sensor_ids = _read_sensor_ids()
+topics_by_id = {topic:id for id, topic in sensor_ids.items()}
 mail_queue = []
 ingest_queue = queue.Queue()
