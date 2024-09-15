@@ -5,7 +5,7 @@ and analyzing humidity, temperature, and power data.  It runs as a daemon, liste
 * Summarizes hourly statistics into the hourly table
 * Summarizes daily statistics into the daily table
 * Produces cycle data indicating how long the dehumidifer spent on and off
-* Prunes old raw data (TODO)
+* Prunes old raw data
 
 # Configuration
 
@@ -13,6 +13,8 @@ All settings live in the `config.json` file.  The location of this file is
 passed as a single environment variable `CONFIG_PATH`.  In a local environment
 this can be whatever.  In a container, the config file should be mounted
 read only into the /config directory.
+
+See `config.json.sample` for a template you can use.
 
 # Testing locally (without Docker)
 ```

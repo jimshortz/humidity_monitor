@@ -1,0 +1,15 @@
+{
+  "mqtt": {
+    "host": "192.168.1.2",
+    "port": 1883,
+    "user": "humid_dev",
+    "pass": "YOUR_PASSWORD",
+    "topic": "basement/#"
+  },
+  "raw_dir": "/data/raw",
+  "sensor_ids": {
+    "basement/indoor_humid": 1,
+    "basement/indoor_temp": 2,
+    "basement/power": 3
+  }
+}
