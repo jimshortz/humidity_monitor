@@ -1,8 +1,9 @@
 import logging
 import paho.mqtt.client as mqtt
 
-from common import config_map, sensor_ids, ingest_queue
+from common import config_map, sensor_ids, ingest_queue, DataPoint
 from datetime import datetime, timezone
+from decimal import *
 
 ########################################################################
 # Humidscope
@@ -28,19 +29,23 @@ def on_connect(client, userdata, flags, reason_code, properties):
 def on_message(client, userdata, msg):
     try:
         # Record timestamp ASAP
-        recvd = datetime.now(timezone.utc).replace(microsecond=0)
-        
-        sensor_id = sensor_ids.get(msg.topic)
-        value = float(msg.payload[:32].decode("utf-8"))
+        datapoint = DataPoint(datetime.now(timezone.utc).replace(microsecond=0),
+                              sensor_ids.get(msg.topic),
+                              Decimal(msg.payload.decode("utf-8")))
 
-        if sensor_id:
-            ingest_queue.put_nowait((recvd, sensor_id, value))
-            logging.debug(f'Queued {recvd}, {sensor_id}, {value}')
-        else:
-            logging.warn(f'Ignoring unknown topic {msg.topic}')
+        if datapoint.sensor_id is None:
+            logging.warning(f'Ignoring unknown topic {msg.topic}')
+            return
+            
+        try:
+            ingest_queue.put_nowait(datapoint)
+            logging.debug(f'Queued {datapoint}')
+        except queue.Full:
+            logging.warning(f'Queue is full, discarding {datapoint}')
+            return
             
     except BaseException as e:
-        logging.error(f'Error handling datapoint: {e}')
+        logging.exception(f'Error handling message {msg}')
 
 
 def start_mqtt():

@@ -15,9 +15,10 @@
 import logging
 import os
 import queue
-from common import config_map, ingest_queue, conn
+from common import config_map, ingest_queue, conn, DataPoint
 from contextlib import closing
 from schedule import repeat, every
+from math import isnan
 
 INSERT_SQL = 'INSERT raw (time, sensor_id, value) VALUES (?,?,?) '+ \
     'ON DUPLICATE KEY UPDATE value=value;'    
@@ -26,7 +27,11 @@ def read_pending():
     batch = []
     while True:
         try:
-            batch.append(ingest_queue.get_nowait())
+            data = ingest_queue.get_nowait()
+            if isnan(data.value):
+                logging.warn(f'Discarding {data}')
+            else:
+                batch.append((data.time, data.sensor_id, data.value))
         except queue.Empty:
             break
     return batch

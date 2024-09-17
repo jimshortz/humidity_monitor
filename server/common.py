@@ -20,6 +20,9 @@ import mariadb
 import os
 import queue
 from contextlib import closing
+from dataclasses import dataclass
+from datetime import datetime
+from decimal import Decimal
 
 # Allows log level to be overriden by a environment variable.
 LOG_LEVEL = os.environ.get('LOGLEVEL', 'INFO').upper()
@@ -27,6 +30,15 @@ LOG_LEVEL = os.environ.get('LOGLEVEL', 'INFO').upper()
 # Initialize the logger
 logging.basicConfig(format='%(asctime)s %(levelname)s:%(message)s', level=LOG_LEVEL)
 
+@dataclass
+class DataPoint:
+    time: datetime
+    sensor_id: int
+    value: Decimal
+
+    def __str__(self):
+        return f'({self.time.isoformat()},{self.sensor_id},{self.value:.3})'
+    
 # Loads the config.json map
 def _load_config():
     path = os.environ.get("CONFIG_PATH")
