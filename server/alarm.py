@@ -110,27 +110,21 @@ def evaluate_alarms():
             mail_queue.append(generate_email(d, now, old_state, state, value))
             update_state(d.id, state)
 
-# Convert time delta to "3d5h4m32s" format
-def format_time_delta(t:timedelta) -> str:
-    ts = int(t.total_seconds())
-    d = ts // 84600
-    ts = ts % 86400
-    h = ts // 3600
-    ts = ts % 3600
-    m = ts // 60
-    s = ts % 60
+# Convert time delta to "3d 5h 4m 32s" format
+def format_time_delta(td:timedelta) -> str:
+    t = datetime.min + td
 
-    ret = ""
-    if d > 0:
-        ret = ret + f'{d}d '
-    if h > 0:
-        ret = ret + f'{h}h '
-    if m > 0:
-        ret = ret + f'{m}m '
-    if s > 0 or t.total_seconds() == 0:
-        ret = ret + f'{s}s '
+    bits = []
+    if td.days > 0:
+        bits.append(f'{td.days}d')
+    if t.hour > 0:
+        bits.append(f'{t.hour}h')
+    if t.minute > 0:
+        bits.append(f'{t.minute}m')
+    if t.second > 0 or td.total_seconds() == 0:
+        bits.append(f'{t.second}s')
         
-    return ret.strip()
+    return " ".join(bits)
 
 # Return 2 digits of precision or None
 def format_value(v:float) -> str:

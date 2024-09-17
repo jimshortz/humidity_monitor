@@ -23,6 +23,7 @@ from schedule import repeat, every
 max_gap = timedelta(minutes=2)
 comp_threshold = 200
 
+INSERT_CYCLE_SQL = 'insert into cycles (start_time, on_duration, off_duration) values (?,?,?)'
 LAST_CYCLE_SQL = '''select date_add(start_time, interval on_duration+off_duration second)
 from cycles order by start_time desc limit 1;'''
 
@@ -60,7 +61,7 @@ def cycle_analyze():
                     logging.debug(f'Inserting cycle {cycle[0].isoformat()},{cycle[1]},{cycle[2]}')
                     batch.append(cycle)
                     if len(batch) > 500:
-                        cur.executemany("insert into cycles (start_time, on_duration, off_duration) values (?,?,?)", batch)
+                        cur.executemany(INSERT_CYCLE_SQL, batch)
                         row_count = row_count + len(batch)
                         batch.clear()
                 (on_time, off_time) = (is_time, None)
@@ -72,7 +73,7 @@ def cycle_analyze():
             (was_time, was_on) = (is_time, is_on)
 
         if batch:
-            cur.executemany("insert into cycles (start_time, on_duration, off_duration) values (?,?,?)", batch)
+            cur.executemany(INSERT_CYCLE_SQL, batch)
             row_count = row_count + len(batch)
         
     logging.info(f'Wrote {row_count} records')
