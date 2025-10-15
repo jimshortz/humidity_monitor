@@ -23,15 +23,20 @@ from decimal import *
 
 def on_connect(client, userdata, flags, reason_code, properties):
     logging.info(f"MQTT Connected with result code {reason_code}")
-    client.subscribe(config_map['mqtt']['topic'])
+    for topic in sensor_ids.keys():
+        logging.debug(f'Subscribing to {topic}')
+        client.subscribe(topic)
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
     try:
         # Record timestamp ASAP
-        datapoint = DataPoint(datetime.now(timezone.utc).replace(microsecond=0),
+        payload_str = msg.payload.decode("utf-8").strip(',')
+        logging.debug(f'Received {payload_str} on {msg.topic}')
+        datapoint = DataPoint(datetime.now(timezone.utc).
+                              replace(microsecond=0),
                               sensor_ids.get(msg.topic),
-                              Decimal(msg.payload.decode("utf-8")))
+                              Decimal(payload_str))
 
         if datapoint.sensor_id is None:
             logging.warning(f'Ignoring unknown topic {msg.topic}')
