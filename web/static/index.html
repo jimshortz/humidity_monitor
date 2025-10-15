@@ -1,0 +1,125 @@
+<!doctype html>
+<html>
+  <head>
+    <!--      <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">-->
+    <!-- TODO - upgrade to latest chart.js -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js" integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js'></script>
+    <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js'></script>
+    <script defer src="index.js"></script>
+    <style>
+      #cur {
+    padding: 50px 0;
+    text-align: center;
+    font-family: sans-serif;
+    font-size: 30px;
+}
+#curhumid {
+    color: green;
+}
+#curtemp {
+    color: blue;
+}
+#curpower {
+    color: red;
+}
+#curtime {
+    font-size: 10px;
+}
+
+.sechdr {
+    font-size: 30px;
+    font-weight: bold;
+}
+
+#data, 
+#data th, 
+#data td {
+      border: 1px solid black; /* gridline color and thickness */
+      border-collapse: collapse; /* ensures borders don't double up */
+      padding: 6px;
+}
+
+#data {
+      border-collapse: collapse; /* make sure borders collapse into single lines */
+}
+ 
+.status-healthy {
+    color: green;
+    font-weight: bold;
+    font-size: 30px;
+}
+
+.status-unhealthy {
+    color: red;
+    font-weight: bold;
+    font-size: 30px;
+}
+
+.status-unknown {
+    color: yellow;
+    font-weight: bold;
+    font-size: 30px;
+}
+
+    </style>
+  </head>
+  <body>
+    <div>
+      <a href='javascript:;' onclick="dayChart()">24 hour</a>
+      <a href='javascript:;' onclick="weekChart()">7 day</a>
+      <a href='javascript:;' onclick="monthChart()">30 day</a>
+      <a href='javascript:;' onclick="yearChart()">1 year</a>
+    </div>
+    <table width="100%">
+      <tr>	
+	<td>
+	  <div id="wrapper">
+	    <canvas id="chart"></canvas>
+	  </div>
+	</td>
+	<td width="20%" valign="top">
+	  <div id=cur>
+          <div id=curtemp>--.- &deg;F</div>
+          <div id=curhumid>--.- %</div>
+          <div id=curpower>--- W</div>
+          <div id=curtime>12:34pm</div>
+	  </div>
+	  <table id="alarms">
+	    <thead>
+	      <tr><th>Description</th><th>State</th></tr>
+	    </thead>
+	    <tbody>
+	    </tbody>
+	  </table>
+	</td>
+      </tr>
+      <tr> 
+	<td align=left>
+	  <div>
+	    <a href='javascript:;' onclick="hourTable()">1 hour</a>
+	    <a href='javascript:;' onclick="dayTable()">1 day</a>
+	    <a href='javascript:;' onclick="monthTable()">30 day</a>
+	    <a href='javascript:;' onclick="yearTable()">1 year</a>
+	    &nbsp;
+	    <a href='javascript:;' onclick="earlierTable()">&larr;</a>
+	    <a href='javascript:;' onclick="laterTable()">&rarr;</a>
+	  </div>
+
+	  <table id="data">
+	    <thead>
+	      <tr>
+		<th >Time</th>
+		<th>Humidity %</th>
+		<th>Temperature &deg;</th>
+		<th>Power (W)</th>
+	      </tr>
+	    </thead>
+	    <tbody>
+	    </tbody>
+	  </table>
+	</td>
+      </tr>
+    </table>
+  </body>
+</html>
