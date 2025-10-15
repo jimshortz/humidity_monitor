@@ -59,16 +59,16 @@ def load_alarms() -> tuple[list[AlarmDefinition], dict[str, AlarmState]]:
             alarm_states[id] = AlarmState[state]
         return (alarm_defs, alarm_states)
 
-UPDATE_STATE_SQL = 'UPDATE alarms SET state=? where id=?'
+UPDATE_STATE_SQL = 'UPDATE alarms SET state=%s where id=%s'
 def update_state(id:str, new_state:AlarmState):
     with closing(conn.cursor()) as cur:
         cur.execute(UPDATE_STATE_SQL, (new_state.name, id))
 
 # Generates a SQL query to evaluate a given definition        
 def gen_sql(d:AlarmDefinition):
-    sql = f'SELECT {d.agg.name}(value) FROM raw WHERE time BETWEEN ? and ?'
+    sql = f'SELECT {d.agg.name}(value) FROM raw WHERE time BETWEEN %s and %s'
     if d.sensor_id is not None:
-        sql = sql + ' AND sensor_id=?'
+        sql = sql + ' AND sensor_id=%s'
     return sql
 
 

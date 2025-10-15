@@ -23,7 +23,7 @@ from schedule import repeat, every
 max_gap = timedelta(minutes=2)
 comp_threshold = 200
 
-INSERT_CYCLE_SQL = 'insert into cycles (start_time, on_duration, off_duration) values (?,?,?)'
+INSERT_CYCLE_SQL = 'insert into cycles (start_time, on_duration, off_duration) values (%s,%s,%s)'
 LAST_CYCLE_SQL = '''select date_add(start_time, interval on_duration+off_duration second)
 from cycles order by start_time desc limit 1;'''
 
@@ -43,7 +43,7 @@ def cycle_analyze():
         (on_time, off_time) = (None, None)
 
         logging.info(f"Detecting cycles since {start}")
-        cur.execute("select time, value from raw where sensor_id = ? and time >= ?", (3, start))
+        cur.execute("select time, value from raw where sensor_id = %s and time >= %s", (3, start))
         row_count = 0
         batch = []
         for (is_time, power) in cur.fetchall():
@@ -95,7 +95,7 @@ def hourly_summary():
             avg(value),
             max(value)
     from    raw
-    where   time >= ? and time < ?
+    where   time >= %s and time < %s
     group by 1, 2""", (start, end))
         logging.info(f'Wrote {cur.rowcount} records')
 
@@ -116,7 +116,7 @@ def daily_summary():
             avg(value),
             max(value)
     from    raw
-    where   time >= ? and time < ?
+    where   time >= %s and time < %s
     group by 1, 2""", (start, end))
         logging.info("Wrote %s rows", cur.rowcount)
 
@@ -128,7 +128,7 @@ def prune_raw():
     total_rows = 0
     with closing(conn.cursor()) as cur:
         while True:
-            cur.execute('DELETE FROM raw WHERE time < ? LIMIT 5000', (oldest,))
+            cur.execute('DELETE FROM raw WHERE time < %s LIMIT 5000', (oldest,))
             total_rows = total_rows + cur.rowcount
             if cur.rowcount < 5000:
                 break

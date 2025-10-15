@@ -16,7 +16,7 @@
 
 import json
 import logging
-import mariadb
+import mysql.connector
 import os
 import queue
 from contextlib import closing
@@ -51,7 +51,7 @@ def _load_config():
 # Should probably retry but it doesn't
 def _db_connect():
     cfg = config_map['mariadb']
-    conn = mariadb.Connection(
+    conn = mysql.connector.connect(
         host=cfg['host'],
         port=cfg['port'],
         user=cfg['user'],
@@ -77,7 +77,7 @@ def ensure_connected():
     try:
         with closing(conn.cursor()) as cur:
             cur.execute('SELECT VERSION()')
-    except mariadb.Error:
+    except mysql.connector.Error:
         conn.reconnect()
         logging.info(f'Reconnected to database')
         

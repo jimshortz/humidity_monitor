@@ -20,7 +20,7 @@ from contextlib import closing
 from schedule import repeat, every
 from math import isnan
 
-INSERT_SQL = 'INSERT raw (time, sensor_id, value) VALUES (?,?,?) '+ \
+INSERT_SQL = 'INSERT raw (time, sensor_id, value) VALUES (%s,%s,%s) '+ \
     'ON DUPLICATE KEY UPDATE value=value;'    
 
 def read_pending():
