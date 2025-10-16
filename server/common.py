@@ -77,6 +77,7 @@ def ensure_connected():
     try:
         with closing(conn.cursor()) as cur:
             cur.execute('SELECT VERSION()')
+            cur.fetchall()
     except mysql.connector.Error:
         conn.reconnect()
         logging.info(f'Reconnected to database')
