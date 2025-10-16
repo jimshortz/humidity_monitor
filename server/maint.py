@@ -118,7 +118,8 @@ def daily_summary():
     from    raw
     where   time >= %s and time < %s
     group by 1, 2""", (start, end))
-        logging.info("Wrote %s rows", cur.rowcount)
+        logging.info(f'Wrote {cur.rowcount} records')
+
 
 @repeat(every().day.at('06:00'))
 def prune_raw():
