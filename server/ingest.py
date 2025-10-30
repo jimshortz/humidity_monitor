@@ -35,14 +35,16 @@ def read_pending():
         except queue.Empty:
             break
     return batch
-    
+
 @repeat(every().minute)
 def ingest():
     batch = read_pending()
     if batch:
+        count = len(batch)
         with closing(conn.cursor()) as cur:
-            logging.debug(f'Inserting {batch}')
+            start = time.monotonic()
             cur.executemany(INSERT_SQL, batch)
-    logging.debug(f'Inserted {len(batch)} data points')
+            elapsed = time.monotonic() - start
+            logging.debug(f'Inserted {len(batch)} data points in {elapsed:0.3f}s {elapsed/count:0.3}s/rec')
             
             
