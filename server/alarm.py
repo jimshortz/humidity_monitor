@@ -63,6 +63,7 @@ UPDATE_STATE_SQL = 'UPDATE alarms SET state=%s where id=%s'
 def update_state(id:str, new_state:AlarmState):
     with closing(conn.cursor()) as cur:
         cur.execute(UPDATE_STATE_SQL, (new_state.name, id))
+        conn.commit()
 
 # Generates a SQL query to evaluate a given definition        
 def gen_sql(d:AlarmDefinition):

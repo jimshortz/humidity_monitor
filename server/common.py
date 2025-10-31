@@ -57,7 +57,7 @@ def _db_connect():
         user=cfg['user'],
         password=cfg['pass'],
         database=cfg['database'],
-        autocommit=True)
+        autocommit=False)
     logging.info(f'Connected to database')
     return conn
 

@@ -75,7 +75,7 @@ def cycle_analyze():
         if batch:
             cur.executemany(INSERT_CYCLE_SQL, batch)
             row_count = row_count + len(batch)
-        
+    conn.commit()
     logging.info(f'Wrote {row_count} records')
 
 @repeat(every().hour.at(':02'))
@@ -97,6 +97,7 @@ def hourly_summary():
     from    raw
     where   time >= %s and time < %s
     group by 1, 2""", (start, end))
+        conn.commit()
         logging.info(f'Wrote {cur.rowcount} records')
 
 @repeat(every().day.at('00:15'))
@@ -118,6 +119,7 @@ def daily_summary():
     from    raw
     where   time >= %s and time < %s
     group by 1, 2""", (start, end))
+        conn.commit()
         logging.info(f'Wrote {cur.rowcount} records')
 
 
@@ -131,6 +133,7 @@ def prune_raw():
         while True:
             cur.execute('DELETE FROM raw WHERE time < %s LIMIT 5000', (oldest,))
             total_rows = total_rows + cur.rowcount
+            conn.commit()
             if cur.rowcount < 5000:
                 break
     logging.info(f'Pruned {total_rows} records')

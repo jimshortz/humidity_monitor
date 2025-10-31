@@ -15,6 +15,7 @@
 import logging
 import os
 import queue
+import time
 from common import config_map, ingest_queue, conn, DataPoint
 from contextlib import closing
 from schedule import repeat, every
@@ -44,6 +45,7 @@ def ingest():
         with closing(conn.cursor()) as cur:
             start = time.monotonic()
             cur.executemany(INSERT_SQL, batch)
+            conn.commit()
             elapsed = time.monotonic() - start
             logging.debug(f'Inserted {len(batch)} data points in {elapsed:0.3f}s {elapsed/count:0.3}s/rec')
             
