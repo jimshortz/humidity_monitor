@@ -45,6 +45,6 @@ def ingest():
             start = time.monotonic()
             cur.executemany(INSERT_SQL, batch)
             elapsed = time.monotonic() - start
-            logging.debug(f'Inserted {len(batch)} data points in {elapsed:0.3f}s {elapsed/count:0.3}s/rec')
+            logging.info(f'Inserted {len(batch)} data points in {elapsed:0.3f}s {elapsed/count:0.3}s/rec')
             
             
