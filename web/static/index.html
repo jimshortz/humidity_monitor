@@ -66,10 +66,14 @@
   </head>
   <body>
     <div>
+      <a href='javascript:;' onclick="hourChart()">1 hour</a>
       <a href='javascript:;' onclick="dayChart()">24 hour</a>
       <a href='javascript:;' onclick="weekChart()">7 day</a>
       <a href='javascript:;' onclick="monthChart()">30 day</a>
       <a href='javascript:;' onclick="yearChart()">1 year</a>
+      <a href='javascript:;' onclick="earlier()">&larr;</a>
+      <a href='javascript:;' onclick="later()">&rarr;</a>
+      <a href='javascript:;' onclick="latest()">now</a>
     </div>
     <table width="100%">
       <tr>	
@@ -95,17 +99,6 @@
 	</td>
       </tr>
       <tr> 
-	<td align=left>
-	  <div>
-	    <a href='javascript:;' onclick="hourTable()">1 hour</a>
-	    <a href='javascript:;' onclick="dayTable()">1 day</a>
-	    <a href='javascript:;' onclick="monthTable()">30 day</a>
-	    <a href='javascript:;' onclick="yearTable()">1 year</a>
-	    &nbsp;
-	    <a href='javascript:;' onclick="earlierTable()">&larr;</a>
-	    <a href='javascript:;' onclick="laterTable()">&rarr;</a>
-	  </div>
-
 	  <table id="data">
 	    <thead>
 	      <tr>

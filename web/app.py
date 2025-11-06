@@ -4,9 +4,9 @@ from contextlib import closing
 from datetime import date, datetime, timedelta
 from flask import Flask, jsonify, request
 import mysql.connector
-#import hashlib, binascii, os
 import os
 import decimal
+import logging
 
 app = Flask(__name__, static_url_path="")
 
@@ -22,7 +22,7 @@ group by time
 order by time;
 """,
     "day": """
-SELECT DATE_FORMAT(time, '%Y-%m-%dZ') AS time,
+SELECT DATE_FORMAT(time, '%Y-%m-%d') AS time,
      max(case sensor_id when 1 then avg_value end) as humid,
      max(case sensor_id when 2 then avg_value end) as temp,
      max(case sensor_id when 3 then avg_value end) as power
@@ -32,13 +32,13 @@ group by time
 order by time;
 """,
     "month": """
-SELECT DATE_FORMAT(time, '%Y-%mZ') as m,
+SELECT DATE_FORMAT(time, '%Y-%m-%d') as m,
             AVG(CASE sensor_id WHEN 1 THEN avg_value END) AS humid,
             AVG(CASE sensor_id WHEN 2 THEN avg_value END) AS temp,
             AVG(CASE sensor_id WHEN 3 THEN avg_value END) AS power
         FROM daily
         WHERE time BETWEEN %s AND %s
-        GROUP by 1
+        GROUP by YEAR(time), MONTH(time)
         ORDER by 1
         LIMIT 72
 """,
@@ -123,6 +123,7 @@ def get_measurements():
 
     with opendb() as db:
         cursor = db.cursor()
+        print(f"Executing {queries[rollup]}, {start}, {end}")
         cursor.execute(queries[rollup], (start, end))
         rows = [[row[0], float(row[1]), float(row[2]), float(row[3])] for row in cursor]
         return jsonify(rows)
