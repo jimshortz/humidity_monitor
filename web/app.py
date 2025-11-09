@@ -3,10 +3,14 @@
 from contextlib import closing
 from datetime import date, datetime, timedelta
 from flask import Flask, jsonify, request
+import calendar
 import mysql.connector
 import os
 import decimal
 import logging
+from mqtt import latest, start_mqtt
+
+logging.basicConfig(level=logging.INFO)
 
 app = Flask(__name__, static_url_path="")
 
@@ -58,7 +62,6 @@ SELECT DATE_FORMAT(time, '%Y-%m-%d') as m,
 
 # Helper that returns an auto-closing DB connection
 def opendb():
-#	return closing(mysql.connector.connect(option_files="./config/my.cnf"))
     return closing(
         mysql.connector.connect(
             host=os.environ["MARIADB_HOST"],
@@ -83,31 +86,8 @@ def root():
 
 @app.route("/api/v1.0/latest", methods=["GET"])
 def get_latest():
-    sql = """
-SELECT time, value from raw where sensor_id = 1 order by time desc limit 1;
-SELECT time, value from raw where sensor_id = 2 order by time desc limit 1;
-SELECT time, value from raw where sensor_id = 3 order by time desc limit 1;
-   """
-    with opendb() as db:
-        cursor = db.cursor()
-        cursor.execute(sql)
-        row = cursor.fetchone()
-        time = row[0]
-        humid = row[1]
-        cursor.nextset()
-        row = cursor.fetchone()
-        temp = row[1]
-        cursor.nextset()
-        row = cursor.fetchone()
-        power = row[1]
-        return jsonify(
-            dict(
-                time=time,
-                humidity=float(humid),
-                temperature=float(temp),
-                power=float(power),
-            )
-        )
+    # Return latest values from MQTT topic
+    return jsonify(latest)
 
 
 @app.route("/api/v1.0/measurements", methods=["GET"])
@@ -120,6 +100,15 @@ def get_measurements():
     if "end" in request.args:
         end = datetime.fromisoformat(request.args["end"])
     rollup = request.args.get("rollup") or "hour"
+    if rollup == "month":
+        # Snap dates to month boundaries
+        start = start.date().replace(day=1)
+        _, days_in_month = calendar.monthrange(end.year, end.month)
+        end = end.date().replace(day=1) + timedelta(days_in_month)
+    elif rollup == "day":
+        # Not really necessary but for consistency
+        start = start.date()
+        end = end.date()
 
     with opendb() as db:
         cursor = db.cursor()
@@ -137,6 +126,9 @@ def get_alarms():
         cursor.execute(sql)
         return jsonify(cursor.fetchall())
 
+# Start the MQTT listener in the background
+with app.app_context():
+    start_mqtt()
 
 if __name__ == "__main__":
     app.run(host="0.0.0.0", debug=True)

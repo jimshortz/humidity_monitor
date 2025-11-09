@@ -1,118 +1,187 @@
 <!doctype html>
 <html>
   <head>
+    <title>Basement Conditions</title>
     <!--      <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0">-->
     <!-- TODO - upgrade to latest chart.js -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js" integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ==" crossorigin="anonymous" referrerpolicy="no-referrer"></script>
-    <script src='https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js'></script>
-    <script src='https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js'></script>
+    <script
+      src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.29.1/moment.min.js"
+      integrity="sha512-qTXRIMyZIFb8iQcfjXWCO8+M5Tbc38Qi5WzdPOYZHIlZpzBHG3L3by84BBBOiRGiEb7KKtAOAs5qYdUiZiQNNQ=="
+      crossorigin="anonymous"
+      referrerpolicy="no-referrer"
+    ></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
     <script defer src="index.js"></script>
     <style>
       #cur {
-    padding: 50px 0;
-    text-align: center;
-    font-family: sans-serif;
-    font-size: 30px;
-}
-#curhumid {
-    color: green;
-}
-#curtemp {
-    color: blue;
-}
-#curpower {
-    color: red;
-}
-#curtime {
-    font-size: 10px;
-}
+        padding: 50px 0;
+        text-align: center;
+        font-family: sans-serif;
+        font-size: 30px;
+      }
+      #curhumid {
+        color: green;
+      }
+      #curtemp {
+        color: blue;
+      }
+      #curpower {
+        color: red;
+      }
+      #curtime {
+        font-size: 10px;
+      }
 
-.sechdr {
-    font-size: 30px;
-    font-weight: bold;
-}
+      .sechdr {
+        font-size: 30px;
+        font-weight: bold;
+      }
 
-#data, 
-#data th, 
-#data td {
-      border: 1px solid black; /* gridline color and thickness */
-      border-collapse: collapse; /* ensures borders don't double up */
-      padding: 6px;
-}
+      #data,
+      #data th,
+      #data td {
+        border: 1px solid black; /* gridline color and thickness */
+        border-collapse: collapse; /* ensures borders don't double up */
+        padding: 6px;
+      }
 
-#data {
-      border-collapse: collapse; /* make sure borders collapse into single lines */
-}
- 
-.status-healthy {
-    color: green;
-    font-weight: bold;
-    font-size: 30px;
-}
+      #data {
+        border-collapse: collapse; /* make sure borders collapse into single lines */
+      }
 
-.status-unhealthy {
-    color: red;
-    font-weight: bold;
-    font-size: 30px;
-}
+      .status-healthy {
+        color: green;
+        font-weight: bold;
+        font-size: 30px;
+      }
 
-.status-unknown {
-    color: yellow;
-    font-weight: bold;
-    font-size: 30px;
-}
+      .status-unhealthy {
+        color: red;
+        font-weight: bold;
+        font-size: 30px;
+      }
 
+      .status-unknown {
+        color: yellow;
+        font-weight: bold;
+        font-size: 30px;
+      }
+
+      /* CONTAINER STYLES */
+      .chart-nav {
+        display: flex; /* Arranges items in a row */
+        gap: 8px; /* Adds space between items */
+        padding: 10px; /* Gives the whole header some breathing room */
+        background-color: #f8f8f8; /* Light background for the header */
+        border-bottom: 1px solid #ddd; /* Separator line */
+        flex-wrap: wrap; /* Allows items to wrap on small screens */
+        justify-content: center; /* Center the entire navigation group */
+      }
+
+      /* LINK/BUTTON STYLES */
+      .chart-nav a {
+        /* Clickability: Increase the physical area */
+        padding: 8px 15px;
+        font-size: 14px;
+        text-decoration: none; /* Remove default underline */
+
+        /* Visual Appeal: Make it look like a button */
+        color: #333;
+        background-color: #fff; /* White background */
+        border: 1px solid #ccc;
+        border-radius: 4px; /* Rounded corners */
+        transition:
+          background-color 0.2s,
+          box-shadow 0.2s; /* Smooth transitions for hover */
+
+        /* Ensure good contrast */
+        font-weight: 500;
+      }
+
+      /* INTERACTIVE STYLES (EASIER TO CLICK/TAP) */
+      .chart-nav a:hover {
+        background-color: #e9e9e9; /* Slight color change on hover (desktop) */
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1); /* Subtle lift effect */
+      }
+
+      .chart-nav a:active {
+        background-color: #ddd; /* Darker color when actively clicked/tapped */
+        transform: translateY(1px); /* Push-down effect */
+      }
+
+      /* STYLES FOR THE SMALL NAVIGATION ARROWS */
+      .chart-nav .nav-control {
+        padding: 8px 12px; /* Slightly smaller padding for controls */
+        font-weight: bold;
+      }
+
+      /* Example of a state: Highlight the currently active button */
+      .chart-nav a.active {
+        background-color: #007bff; /* Primary color */
+        color: white;
+        border-color: #007bff;
+      }
+
+      .chart-nav a.active {
+        /* Example Highlighting */
+        background-color: #007bff; /* Primary Blue Background */
+        color: white; /* White Text */
+        border-color: #007bff;
+        box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.2); /* Slight pressed look */
+        font-weight: bold;
+      }
     </style>
   </head>
   <body>
-    <div>
-      <a href='javascript:;' onclick="hourChart()">1 hour</a>
-      <a href='javascript:;' onclick="dayChart()">24 hour</a>
-      <a href='javascript:;' onclick="weekChart()">7 day</a>
-      <a href='javascript:;' onclick="monthChart()">30 day</a>
-      <a href='javascript:;' onclick="yearChart()">1 year</a>
-      <a href='javascript:;' onclick="earlier()">&larr;</a>
-      <a href='javascript:;' onclick="later()">&rarr;</a>
-      <a href='javascript:;' onclick="latest()">now</a>
+    <div class="chart-nav">
+      <a href="javascript:;" onclick="hourChart(this)">1 hour</a>
+      <a href="javascript:;" onclick="dayChart(this)" id="day-mode">24 hour</a>
+      <a href="javascript:;" onclick="weekChart(this)">7 day</a>
+      <a href="javascript:;" onclick="monthChart(this)">30 day</a>
+      <a href="javascript:;" onclick="yearChart(this)">1 year</a>
+      <a href="javascript:;" onclick="earlier()" class="nav-control">&larr;</a>
+      <a href="javascript:;" onclick="later()" class="nav-control">&rarr;</a>
+      <a href="javascript:;" onclick="latest()" class="nav-control">now</a>
     </div>
     <table width="100%">
-      <tr>	
-	<td>
-	  <div id="wrapper">
-	    <canvas id="chart"></canvas>
-	  </div>
-	</td>
-	<td width="20%" valign="top">
-	  <div id=cur>
-          <div id=curtemp>--.- &deg;F</div>
-          <div id=curhumid>--.- %</div>
-          <div id=curpower>--- W</div>
-          <div id=curtime>12:34pm</div>
-	  </div>
-	  <table id="alarms">
-	    <thead>
-	      <tr><th>Description</th><th>State</th></tr>
-	    </thead>
-	    <tbody>
-	    </tbody>
-	  </table>
-	</td>
-      </tr>
-      <tr> 
-	  <table id="data">
-	    <thead>
-	      <tr>
-		<th >Time</th>
-		<th>Humidity %</th>
-		<th>Temperature &deg;</th>
-		<th>Power (W)</th>
-	      </tr>
-	    </thead>
-	    <tbody>
-	    </tbody>
-	  </table>
-	</td>
+      <tr>
+        <td>
+          <div id="wrapper">
+            <canvas id="chart"></canvas>
+          </div>
+        </td>
+        <td width="20%" valign="top">
+          <div id="cur">
+            <div id="curtemp">--.- &deg;F</div>
+            <div id="curhumid">--.- %</div>
+            <div id="curpower">--- W</div>
+            <div id="curtime">No readings</div>
+          </div>
+          <table id="alarms" align="center">
+            <thead>
+              <tr>
+                <th>Description</th>
+                <th>State</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </td>
       </tr>
     </table>
+    <div>
+      <table id="data">
+        <thead>
+          <tr>
+            <th>Time</th>
+            <th>Humidity %</th>
+            <th>Temperature &deg;</th>
+            <th>Power (W)</th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
   </body>
 </html>
