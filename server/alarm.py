@@ -28,58 +28,77 @@ from email.mime.text import MIMEText
 from enum import Enum
 from schedule import every, repeat
 
-AlarmState = Enum('AlarmState', ['UNKNOWN','STARTUP', 'TOO_LOW','TOO_HIGH','HEALTHY'])
+AlarmState = Enum(
+    "AlarmState", ["UNKNOWN", "STARTUP", "TOO_LOW", "TOO_HIGH", "HEALTHY"]
+)
 
-Aggregate = Enum('Aggregate', ['COUNT','AVG', 'MIN', 'MAX'])
-email_sender = config_map['email']['sender']
-email_recipients = config_map['email']['recipients']
+Aggregate = Enum("Aggregate", ["COUNT", "AVG", "MIN", "MAX"])
+email_sender = config_map["email"]["sender"]
+email_recipients = config_map["email"]["recipients"]
+
 
 @dataclass
 class AlarmDefinition:
-    id:str
+    id: str
     agg: Aggregate
-    window:timedelta
-    message:str
-    sensor_id:int | None = None
-    min:float | None = None
-    max:float | None = None
+    window: timedelta
+    message: str
+    sensor_id: int | None = None
+    min: float | None = None
+    max: float | None = None
 
-LOAD_ALARM_SQL = 'SELECT id, sensor_id, aggregate, window, min_value, max_value, message, state '\
-    'FROM alarms'
+
+LOAD_ALARM_SQL = (
+    "SELECT id, sensor_id, aggregate, window, min_value, max_value, message, state "
+    "FROM alarms"
+)
+
 
 def load_alarms() -> tuple[list[AlarmDefinition], dict[str, AlarmState]]:
     with closing(conn.cursor()) as cur:
         cur.execute(LOAD_ALARM_SQL)
         alarm_defs = []
         alarm_states = {}
-        for (id, sensor_id, agg, window, min, max, msg, state) in cur.fetchall():
-            alarm_defs.append(AlarmDefinition(id=id, sensor_id=sensor_id, agg=Aggregate[agg],
-                                              window=timedelta(seconds=window), min=min, max=max,
-                                              message=msg))
+        for id, sensor_id, agg, window, min, max, msg, state in cur.fetchall():
+            alarm_defs.append(
+                AlarmDefinition(
+                    id=id,
+                    sensor_id=sensor_id,
+                    agg=Aggregate[agg],
+                    window=timedelta(seconds=window),
+                    min=min,
+                    max=max,
+                    message=msg,
+                )
+            )
             alarm_states[id] = AlarmState[state]
         return (alarm_defs, alarm_states)
 
-UPDATE_STATE_SQL = 'UPDATE alarms SET state=%s where id=%s'
-def update_state(id:str, new_state:AlarmState):
+
+UPDATE_STATE_SQL = "UPDATE alarms SET state=%s where id=%s"
+
+
+def update_state(id: str, new_state: AlarmState):
     with closing(conn.cursor()) as cur:
         cur.execute(UPDATE_STATE_SQL, (new_state.name, id))
 
-# Generates a SQL query to evaluate a given definition        
-def gen_sql(d:AlarmDefinition):
-    sql = f'SELECT {d.agg.name}(value) FROM raw WHERE time BETWEEN %s and %s'
+
+# Generates a SQL query to evaluate a given definition
+def gen_sql(d: AlarmDefinition):
+    sql = f"SELECT {d.agg.name}(value) FROM raw WHERE time BETWEEN %s and %s"
     if d.sensor_id is not None:
-        sql = sql + ' AND sensor_id=%s'
+        sql = sql + " AND sensor_id=%s"
     return sql
 
 
 # Computes the current state and value of this alarm
-def evaluate_alarm(now, d:AlarmDefinition):
+def evaluate_alarm(now, d: AlarmDefinition, old_state: AlarmState):
     with closing(conn.cursor()) as cur:
         sql = gen_sql(d)
-        params = (now-d.window, now, d.sensor_id)
+        params = (now - d.window, now, d.sensor_id)
         if d.sensor_id is None:
             params = params[:2]
-        logging.debug(f'Executing {sql} with {params}')
+        logging.debug(f"Executing {sql} with {params}")
         cur.execute(sql, params)
         value = cur.fetchone()[0]
 
@@ -90,48 +109,63 @@ def evaluate_alarm(now, d:AlarmDefinition):
         elif d.max is not None and value > d.max:
             state = AlarmState.TOO_HIGH
         else:
-            state = AlarmState.HEALTHY    
+            if old_state == AlarmState.TOO_LOW and value < d.min * 1.005:
+                # Make sure it comes back to at least 0.5% above min
+                # value before clearing the alarm
+                state = old_state
+            elif old_state == AlarmState.TOO_HIGH and value > d.max * 0.995:
+                # Make sure it comes back to at least 0,5% below max
+                # value before clearing the alarm
+                state = old_state
+            else:
+                state = AlarmState.HEALTHY
 
         return (state, value)
+
 
 # Evaluates all alarms and queues emails as necessary
 @repeat(every(5).minutes)
 def evaluate_alarms():
-    logging.info('Evaluating alarms')
+    logging.info("Evaluating alarms")
     now = datetime.now(timezone.utc)
     alarm_defs, alarm_states = load_alarms()
     for d in alarm_defs:
-        (state, value) = evaluate_alarm(now, d)
-        logging.debug(f'{d.id} {state.name} {value}')
         old_state = alarm_states[d.id]
+        (state, value) = evaluate_alarm(now, d, old_state)
+        logging.debug(f"{d.id} {state.name} {value}")
         if state != old_state:
-            logging.error(f'ALARM {d.id} old_state={old_state.name} new_state={state.name} '\
-                          f'now={now.isoformat()}')
+            logging.error(
+                f"ALARM {d.id} old_state={old_state.name} new_state={state.name} "
+                f"now={now.isoformat()}"
+            )
             mail_queue.append(generate_email(d, now, old_state, state, value))
             update_state(d.id, state)
 
+
 # Convert time delta to "3d 5h 4m 32s" format
-def format_time_delta(td:timedelta) -> str:
+def format_time_delta(td: timedelta) -> str:
     t = datetime.min + td
 
     bits = []
     if td.days > 0:
-        bits.append(f'{td.days}d')
+        bits.append(f"{td.days}d")
     if t.hour > 0:
-        bits.append(f'{t.hour}h')
+        bits.append(f"{t.hour}h")
     if t.minute > 0:
-        bits.append(f'{t.minute}m')
+        bits.append(f"{t.minute}m")
     if t.second > 0 or td.total_seconds() == 0:
-        bits.append(f'{t.second}s')
-        
+        bits.append(f"{t.second}s")
+
     return " ".join(bits)
 
+
 # Return 2 digits of precision or None
-def format_value(v:float) -> str:
+def format_value(v: float) -> str:
     if v is None:
-        return 'No data'
+        return "No data"
     else:
-        return f'{v:.2f}'
+        return f"{v:.2f}"
+
 
 EMAIL_CSS = """
 th {
@@ -145,9 +179,10 @@ th {
 }
 """
 
-# Composes an email to tell the user what happened        
-def generate_email(d:AlarmDefinition, now, old_state, new_state, value):
-    
+
+# Composes an email to tell the user what happened
+def generate_email(d: AlarmDefinition, now, old_state, new_state, value):
+
     plain = f"""The alarm {d.id} has transitioned from {old_state.name} to {new_state.name}.
     
 Time:\t\t{now:%m/%d/%Y %H:%M:%S UTC}
@@ -157,9 +192,9 @@ Aggregate:\t{d.agg.name}
 Window:\t\t{format_time_delta(d.window)}
 Min Allowed:\t{format_value(d.min)}
 Max Allowed:\t{format_value(d.max)}
-""";
-    plain_part = MIMEText(plain, 'plain')
-    
+"""
+    plain_part = MIMEText(plain, "plain")
+
     html = f"""<html><head><style>{EMAIL_CSS}</style></head><body>
     <p>The alarm <span class=code>{d.id}</span> has transitioned from
     <span class=code>{old_state.name}</span> to <span class=code>{new_state.name}</span>.</p>
@@ -172,13 +207,13 @@ Max Allowed:\t{format_value(d.max)}
     <tr><th>Min Allowed:</td><td>{format_value(d.min)}</td></tr>
     <tr><th>Max Allowed:</td><td>{format_value(d.max)}</td></tr>
     </table>
-    </body></html>""";    
-    html_part = MIMEText(html, 'html')
-    
-    msg = MIMEMultipart('alternative')
+    </body></html>"""
+    html_part = MIMEText(html, "html")
+
+    msg = MIMEMultipart("alternative")
     msg.attach(plain_part)
     msg.attach(html_part)
-    msg['Subject'] = f'{new_state.name}: {d.message}'
-    msg['From'] = email_sender
-    msg['To'] = ', '.join(email_recipients)
+    msg["Subject"] = f"{new_state.name}: {d.message}"
+    msg["From"] = email_sender
+    msg["To"] = ", ".join(email_recipients)
     return msg

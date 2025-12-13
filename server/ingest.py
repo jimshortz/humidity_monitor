@@ -21,8 +21,11 @@ from contextlib import closing
 from schedule import repeat, every
 from math import isnan
 
-INSERT_SQL = 'INSERT raw (time, sensor_id, value) VALUES (%s,%s,%s) '+ \
-    'ON DUPLICATE KEY UPDATE value=value;'    
+INSERT_SQL = (
+    "INSERT raw (time, sensor_id, value) VALUES (%s,%s,%s) "
+    + "ON DUPLICATE KEY UPDATE value=value;"
+)
+
 
 def read_pending():
     batch = []
@@ -30,12 +33,13 @@ def read_pending():
         try:
             data = ingest_queue.get_nowait()
             if isnan(data.value):
-                logging.warn(f'Discarding {data}')
+                logging.warn(f"Discarding {data}")
             else:
                 batch.append((data.time, data.sensor_id, data.value))
         except queue.Empty:
             break
     return batch
+
 
 @repeat(every().minute)
 def ingest():
@@ -46,6 +50,6 @@ def ingest():
             start = time.monotonic()
             cur.executemany(INSERT_SQL, batch)
             elapsed = time.monotonic() - start
-            logging.info(f'Inserted {len(batch)} data points in {elapsed:0.3f}s {elapsed/count:0.3}s/rec')
-            
-            
+            logging.info(
+                f"Inserted {len(batch)} data points in {elapsed:0.3f}s {elapsed/count:0.3}s/rec"
+            )

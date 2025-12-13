@@ -29,13 +29,13 @@ import alarm
 import mail
 import maint
 
-if os.environ.get('RUN_ALL'):
-    logging.info('Running all jobs')
+if os.environ.get("RUN_ALL"):
+    logging.info("Running all jobs")
     schedule.run_all()
-    
+
 # Main loop.  Processes the schedule and makes sure the DB is
 # alive before starting a job.
-logging.info('Starting scheduler')
+logging.info("Starting scheduler")
 while True:
     snooze = 0
     try:
@@ -43,10 +43,8 @@ while True:
         schedule.run_pending()
         snooze = schedule.idle_seconds()
     except BaseException as e:
-        logging.exception(f'Exception in job')
+        logging.exception(f"Exception in job")
         snooze = 60
-        
+
     if snooze > 0:
         sleep(snooze)
-
-

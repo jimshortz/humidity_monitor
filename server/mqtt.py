@@ -21,48 +21,52 @@ from decimal import *
 # It was shamelessly stolen from the paho MQTT sample code.
 ########################################################################
 
+
 def on_connect(client, userdata, flags, reason_code, properties):
     logging.info(f"MQTT Connected with result code {reason_code}")
     for topic in sensor_ids.keys():
-        logging.debug(f'Subscribing to {topic}')
+        logging.debug(f"Subscribing to {topic}")
         client.subscribe(topic)
+
 
 # The callback for when a PUBLISH message is received from the server.
 def on_message(client, userdata, msg):
     try:
         # Record timestamp ASAP
-        payload_str = msg.payload.decode("utf-8").strip(',')
-        logging.debug(f'Received {payload_str} on {msg.topic}')
-        datapoint = DataPoint(datetime.now(timezone.utc).
-                              replace(microsecond=0),
-                              sensor_ids.get(msg.topic),
-                              Decimal(payload_str))
+        payload_str = msg.payload.decode("utf-8").strip(",")
+        logging.debug(f"Received {payload_str} on {msg.topic}")
+        datapoint = DataPoint(
+            datetime.now(timezone.utc).replace(microsecond=0),
+            sensor_ids.get(msg.topic),
+            Decimal(payload_str),
+        )
 
         if datapoint.sensor_id is None:
-            logging.warning(f'Ignoring unknown topic {msg.topic}')
+            logging.warning(f"Ignoring unknown topic {msg.topic}")
             return
-            
+
         try:
             ingest_queue.put_nowait(datapoint)
-            logging.debug(f'Queued {datapoint}')
+            logging.debug(f"Queued {datapoint}")
         except queue.Full:
-            logging.warning(f'Queue is full, discarding {datapoint}')
+            logging.warning(f"Queue is full, discarding {datapoint}")
             return
-            
+
     except BaseException as e:
-        logging.exception(f'Error handling message {msg}')
+        logging.exception(f"Error handling message {msg}")
 
 
 def start_mqtt():
     mqttc = mqtt.Client(mqtt.CallbackAPIVersion.VERSION2)
 
-    cfg = config_map['mqtt']
-    mqttc.username_pw_set(cfg['user'], cfg['pass'])
+    cfg = config_map["mqtt"]
+    mqttc.username_pw_set(cfg["user"], cfg["pass"])
     mqttc.on_connect = on_connect
     mqttc.on_message = on_message
 
-    mqttc.connect(cfg['host'], cfg['port'], 60)
+    mqttc.connect(cfg["host"], cfg["port"], 60)
     mqttc.loop_start()
-    logging.info('Started MQTT loop')
+    logging.info("Started MQTT loop")
+
 
 start_mqtt()
