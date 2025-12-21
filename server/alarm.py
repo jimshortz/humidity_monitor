@@ -21,6 +21,7 @@
 import logging
 from common import conn, config_map, mail_queue, topics_by_id
 from contextlib import closing
+from decimal import Decimal
 from dataclasses import dataclass
 from datetime import date, datetime, timezone, timedelta
 from email.mime.multipart import MIMEMultipart
@@ -44,8 +45,8 @@ class AlarmDefinition:
     window: timedelta
     message: str
     sensor_id: int | None = None
-    min: float | None = None
-    max: float | None = None
+    min: Decimal | None = None
+    max: Decimal | None = None
 
 
 LOAD_ALARM_SQL = (
@@ -109,12 +110,12 @@ def evaluate_alarm(now, d: AlarmDefinition, old_state: AlarmState):
         elif d.max is not None and value > d.max:
             state = AlarmState.TOO_HIGH
         else:
-            if old_state == AlarmState.TOO_LOW and value < d.min * 1.005:
+            if old_state == AlarmState.TOO_LOW and value < d.min * Decimal("1.005"):
                 # Make sure it comes back to at least 0.5% above min
                 # value before clearing the alarm
                 state = old_state
-            elif old_state == AlarmState.TOO_HIGH and value > d.max * 0.995:
-                # Make sure it comes back to at least 0,5% below max
+            elif old_state == AlarmState.TOO_HIGH and value > d.max * Decimal("0.995"):
+                # Make sure it comes back to at least 0.5% below max
                 # value before clearing the alarm
                 state = old_state
             else:
